@@ -1,5 +1,6 @@
 package com.eventhub.eventhub_backend.service;
 
+import com.eventhub.eventhub_backend.dto.AuthResponse;
 import com.eventhub.eventhub_backend.dto.LoginRequest;
 import com.eventhub.eventhub_backend.dto.RegisterRequest;
 import com.eventhub.eventhub_backend.dto.UserResponse;
@@ -19,6 +20,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     public UserResponse register(RegisterRequest request) {
         String email = request.email().trim().toLowerCase();
@@ -43,7 +45,7 @@ public class AuthService {
         return UserResponse.from(userRepository.save(user));
     }
 
-    public UserResponse login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request) {
         String email = request.email().trim().toLowerCase();
 
         User user = userRepository.findByEmail(email)
@@ -52,6 +54,8 @@ public class AuthService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.UNAUTHORIZED, "Invalid email or password"));
 
-        return UserResponse.from(user);
+        String token = jwtService.generateToken(user);
+        return new AuthResponse(token, "Bearer", jwtService.getExpirationSeconds(),
+                UserResponse.from(user));
     }
 }

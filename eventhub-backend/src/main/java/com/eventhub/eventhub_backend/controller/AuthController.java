@@ -1,5 +1,6 @@
 package com.eventhub.eventhub_backend.controller;
 
+import com.eventhub.eventhub_backend.dto.AuthResponse;
 import com.eventhub.eventhub_backend.dto.LoginRequest;
 import com.eventhub.eventhub_backend.dto.RegisterRequest;
 import com.eventhub.eventhub_backend.dto.UserResponse;
@@ -23,7 +24,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public UserResponse login(@Valid @RequestBody LoginRequest request) {
+    public AuthResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
     }
 }
