@@ -20,8 +20,8 @@ public class MeController {
                 "role", jwt.getClaimAsString("role"));
     }
 
-    @GetMapping("/organizer/ping")
-    public String organizerPing() {
-        return "Organizer area";
-    }
+//    @GetMapping("/organizer/ping")
+//    public String organizerPing() {
+//        return "Organizer area";
+//    }
 }
