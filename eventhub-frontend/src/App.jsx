@@ -3,6 +3,7 @@ import Navbar from './components/Navbar';
 import Events from './pages/Events';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import EventDetail from './pages/EventDetail';
 
 function NotFound() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="*" element={<NotFound />} />
+          <Route path="/events/:id" element={<EventDetail />} />
         </Routes>
       </main>
     </>
