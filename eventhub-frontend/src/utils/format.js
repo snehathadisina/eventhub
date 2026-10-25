@@ -19,3 +19,11 @@ export function formatDateTime(value) {
 export function formatPrice(value) {
   return Number(value) === 0 ? 'Free' : currency.format(value);
 }
+export function toInputValue(value) {
+  return value ? value.slice(0, 16) : '';
+}
+
+export function toApiValue(value) {
+  if (!value) return null;
+  return value.length === 16 ? `${value}:00` : value;
+}

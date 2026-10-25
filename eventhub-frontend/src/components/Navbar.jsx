@@ -2,7 +2,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 
 export default function Navbar() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isOrganizer, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -16,6 +16,7 @@ export default function Navbar() {
         <Link to="/" className="brand">EventHub</Link>
         <nav className="nav-links">
           <NavLink to="/" end>Events</NavLink>
+          {isOrganizer && <NavLink to="/organizer/events">My events</NavLink>}
           {isAuthenticated ? (
             <>
               <span className="nav-user">Hi, {user.name}</span>

@@ -100,6 +100,11 @@ public class EventService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public EventResponse getMine(Long eventId, Long organizerId) {
+        return EventResponse.from(getOwnedEvent(eventId, organizerId));
+    }
+
     private void applyRequest(Event event, EventRequest request) {
         event.setTitle(request.title().trim());
         event.setDescription(request.description());

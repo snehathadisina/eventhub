@@ -60,6 +60,11 @@ public class OrganizerEventController {
         return eventService.listTicketTypes(id, organizerId(jwt));
     }
 
+    @GetMapping("/{id}")
+    public EventResponse getMine(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        return eventService.getMine(id, organizerId(jwt));
+    }
+
     private Long organizerId(Jwt jwt) {
         return Long.valueOf(jwt.getSubject());
     }
