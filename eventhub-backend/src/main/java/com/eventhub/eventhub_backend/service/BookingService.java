@@ -37,7 +37,7 @@ public class BookingService {
 
     @Transactional
     public BookingResponse book(BookingRequest request, Long userId) {
-        TicketType ticketType = ticketTypeRepository.findById(request.ticketTypeId())
+        TicketType ticketType = ticketTypeRepository.findByIdForUpdate(request.ticketTypeId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ticket type not found"));
 
         Event event = ticketType.getEvent();
@@ -56,6 +56,11 @@ public class BookingService {
 
         // WARNING: read-then-write with no locking. This is NOT safe when two people book
         // at the same time. We prove it on Day 9 and fix it on Days 10-11.
+//        ticketType.setAvailableQuantity(ticketType.getAvailableQuantity() - quantity);
+//        ticketTypeRepository.saveAndFlush(ticketType);
+
+        // The row is locked by findByIdForUpdate above, so this read-check-write is safe:
+        // other buyers wait until this transaction commits, then see the updated stock.
         ticketType.setAvailableQuantity(ticketType.getAvailableQuantity() - quantity);
 
         Booking booking = new Booking();

@@ -9,6 +9,8 @@ import java.util.List;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
+    long countByTicketTypeId(Long ticketTypeId);
+
     @Query("""
             select b from Booking b
             join fetch b.ticketType tt
