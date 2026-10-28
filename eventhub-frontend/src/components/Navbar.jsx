@@ -16,6 +16,7 @@ export default function Navbar() {
         <Link to="/" className="brand">EventHub</Link>
         <nav className="nav-links">
           <NavLink to="/" end>Events</NavLink>
+          {isAuthenticated && <NavLink to="/my-tickets">My tickets</NavLink>}
           {isOrganizer && <NavLink to="/organizer/events">My events</NavLink>}
           {isAuthenticated ? (
             <>

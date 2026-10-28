@@ -1,11 +1,13 @@
 import { Route, Routes } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import RequireAuth from './components/RequireAuth';
 import RequireOrganizer from './components/RequireOrganizer';
 import EventDetail from './pages/EventDetail';
 import EventForm from './pages/EventForm';
 import Events from './pages/Events';
 import Login from './pages/Login';
 import ManageTickets from './pages/ManageTickets';
+import MyTickets from './pages/MyTickets';
 import OrganizerEvents from './pages/OrganizerEvents';
 import Register from './pages/Register';
 
@@ -27,6 +29,10 @@ export default function App() {
           <Route path="/events/:id" element={<EventDetail />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+
+          <Route element={<RequireAuth />}>
+            <Route path="/my-tickets" element={<MyTickets />} />
+          </Route>
 
           <Route element={<RequireOrganizer />}>
             <Route path="/organizer/events" element={<OrganizerEvents />} />

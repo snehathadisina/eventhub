@@ -14,7 +14,8 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false);
 
   if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+    // return <Navigate to="/" replace />;
+        return <Navigate to={redirectTo} replace />;
   }
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
