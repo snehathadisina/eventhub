@@ -1,6 +1,7 @@
 package com.eventhub.eventhub_backend.repository;
 
 import com.eventhub.eventhub_backend.entity.Booking;
+import com.eventhub.eventhub_backend.enums.BookingStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -27,4 +28,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     Optional<Booking> findByIdForUpdate(@Param("id") Long id);
 
     long countByTicketTypeId(Long ticketTypeId);
+
+    long countByTicketTypeIdAndStatus(Long ticketTypeId, BookingStatus status);
 }

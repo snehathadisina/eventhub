@@ -11,7 +11,6 @@ import com.eventhub.eventhub_backend.enums.EventStatus;
 import com.eventhub.eventhub_backend.repository.BookingRepository;
 import com.eventhub.eventhub_backend.repository.TicketRepository;
 import com.eventhub.eventhub_backend.repository.TicketTypeRepository;
-import com.eventhub.eventhub_backend.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,13 +19,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,7 +32,8 @@ public class BookingService {
     private final TicketTypeRepository ticketTypeRepository;
     private final BookingRepository bookingRepository;
     private final TicketRepository ticketRepository;
-    private final UserRepository userRepository;
+    private final BookingCreator bookingCreator;
+    private final WaitingListPromotionService waitingListPromotionService;
 
     @Value("${app.booking.stock-strategy:lock}")
     private String stockStrategy;
@@ -71,24 +68,7 @@ public class BookingService {
         int quantity = request.quantity();
         reserveStock(ticketType, quantity);
 
-        Booking booking = new Booking();
-        booking.setUser(userRepository.getReferenceById(userId));
-        booking.setTicketType(ticketType);
-        booking.setQuantity(quantity);
-        booking.setStatus(BookingStatus.CONFIRMED);
-        booking.setTotalAmount(ticketType.getPrice().multiply(BigDecimal.valueOf(quantity)));
-        bookingRepository.save(booking);
-
-        List<Ticket> tickets = new ArrayList<>();
-        for (int i = 0; i < quantity; i++) {
-            Ticket ticket = new Ticket();
-            ticket.setBooking(booking);
-            ticket.setTicketCode(UUID.randomUUID().toString());
-            tickets.add(ticket);
-        }
-        ticketRepository.saveAll(tickets);
-
-        return BookingResponse.from(booking, tickets);
+        return bookingCreator.create(userId, ticketType, quantity);
     }
 
     @Transactional(readOnly = true)
@@ -106,31 +86,6 @@ public class BookingService {
         return bookings.stream()
                 .map(b -> BookingResponse.from(b, ticketsByBooking.getOrDefault(b.getId(), List.of())))
                 .toList();
-    }
-
-    private TicketType loadTicketType(Long ticketTypeId) {
-        Optional<TicketType> found = useAtomicUpdate
-                ? ticketTypeRepository.findById(ticketTypeId)
-                : ticketTypeRepository.findByIdForUpdate(ticketTypeId);
-
-        return found.orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ticket type not found"));
-    }
-
-    private void reserveStock(TicketType ticketType, int quantity) {
-        if (useAtomicUpdate) {
-            // One statement checks and subtracts together. No other buyer can slip in between.
-            int updated = ticketTypeRepository.decrementStock(ticketType.getId(), quantity);
-            if (updated == 0) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Not enough tickets available");
-            }
-        } else {
-            // The row is locked by findByIdForUpdate, so this read-check-write is safe.
-            if (ticketType.getAvailableQuantity() < quantity) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Not enough tickets available");
-            }
-            ticketType.setAvailableQuantity(ticketType.getAvailableQuantity() - quantity);
-        }
     }
 
     @Transactional
@@ -159,7 +114,35 @@ public class BookingService {
             throw new IllegalStateException("Could not restore stock for booking " + bookingId);
         }
 
+        // Day 13: the freed tickets go to the people waiting, in the same transaction
+        waitingListPromotionService.promoteFor(ticketType.getId());
+
         List<Ticket> tickets = ticketRepository.findByBookingIdIn(List.of(booking.getId()));
         return BookingResponse.from(booking, tickets);
+    }
+
+    private TicketType loadTicketType(Long ticketTypeId) {
+        Optional<TicketType> found = useAtomicUpdate
+                ? ticketTypeRepository.findById(ticketTypeId)
+                : ticketTypeRepository.findByIdForUpdate(ticketTypeId);
+
+        return found.orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ticket type not found"));
+    }
+
+    private void reserveStock(TicketType ticketType, int quantity) {
+        if (useAtomicUpdate) {
+            // One statement checks and subtracts together. No other buyer can slip in between.
+            int updated = ticketTypeRepository.decrementStock(ticketType.getId(), quantity);
+            if (updated == 0) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Not enough tickets available");
+            }
+        } else {
+            // The row is locked by findByIdForUpdate, so this read-check-write is safe.
+            if (ticketType.getAvailableQuantity() < quantity) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Not enough tickets available");
+            }
+            ticketType.setAvailableQuantity(ticketType.getAvailableQuantity() - quantity);
+        }
     }
 }

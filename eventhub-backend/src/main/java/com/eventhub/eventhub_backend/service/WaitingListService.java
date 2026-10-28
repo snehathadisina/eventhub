@@ -29,7 +29,7 @@ public class WaitingListService {
 
     @Transactional
     public WaitingListResponse join(WaitingListRequest request, Long userId) {
-        // Locking the ticket type row makes joins, bookings and (Day 13) promotions take turns
+        // Locking the ticket type row makes joins, bookings and promotions take turns
         TicketType ticketType = ticketTypeRepository.findByIdForUpdate(request.ticketTypeId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ticket type not found"));
 
@@ -74,11 +74,16 @@ public class WaitingListService {
 
     @Transactional
     public WaitingListResponse leave(Long entryId, Long userId) {
-        WaitingList entry = waitingListRepository.findByIdWithDetails(entryId)
+        // Locking read: if a promotion is working on this entry we wait, then see its final status
+        WaitingList entry = waitingListRepository.findByIdForUpdate(entryId)
                 .filter(w -> w.getUser().getId().equals(userId))
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Waiting list entry not found"));
 
+        if (entry.getStatus() == WaitingListStatus.PROMOTED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "You already got these tickets. Cancel the booking instead");
+        }
         if (entry.getStatus() != WaitingListStatus.WAITING) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "You are no longer waiting for this ticket type");
