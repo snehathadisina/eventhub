@@ -42,6 +42,12 @@ public class CheckInService {
         if (!booking.getTicketType().getEvent().getId().equals(eventId)) {
             throw conflict("This ticket is for a different event");
         }
+//        if (booking.getStatus() != BookingStatus.CONFIRMED) {
+//            throw conflict("This ticket was cancelled");
+//        }
+        if (booking.getStatus() == BookingStatus.PENDING) {
+            throw conflict("This ticket has not been paid for yet");
+        }
         if (booking.getStatus() != BookingStatus.CONFIRMED) {
             throw conflict("This ticket was cancelled");
         }

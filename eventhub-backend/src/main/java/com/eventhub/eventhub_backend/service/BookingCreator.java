@@ -9,11 +9,13 @@ import com.eventhub.eventhub_backend.repository.BookingRepository;
 import com.eventhub.eventhub_backend.repository.TicketRepository;
 import com.eventhub.eventhub_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -26,18 +28,30 @@ public class BookingCreator {
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
 
+    @Value("${app.payment.enabled:true}")
+    private boolean paymentEnabled;
+
+    @Value("${app.payment.hold-minutes:10}")
+    private long holdMinutes;
+
     /**
-     * Saves a CONFIRMED booking and one ticket per seat.
-     * The caller must already have reserved the stock, and must be inside a transaction.
+     * Saves a booking and one ticket per seat. The caller must already have reserved the stock
+     * and must be inside a transaction.
+     * Paid tickets start PENDING and hold the stock until the payment window closes.
+     * Free tickets (or payment switched off) are CONFIRMED straight away.
      */
     @Transactional(propagation = Propagation.MANDATORY)
     public BookingResponse create(Long userId, TicketType ticketType, int quantity) {
+        BigDecimal total = ticketType.getPrice().multiply(BigDecimal.valueOf(quantity));
+        boolean needsPayment = paymentEnabled && total.signum() > 0;
+
         Booking booking = new Booking();
         booking.setUser(userRepository.getReferenceById(userId));
         booking.setTicketType(ticketType);
         booking.setQuantity(quantity);
-        booking.setStatus(BookingStatus.CONFIRMED);
-        booking.setTotalAmount(ticketType.getPrice().multiply(BigDecimal.valueOf(quantity)));
+        booking.setTotalAmount(total);
+        booking.setStatus(needsPayment ? BookingStatus.PENDING : BookingStatus.CONFIRMED);
+        booking.setExpiresAt(needsPayment ? LocalDateTime.now().plusMinutes(holdMinutes) : null);
         bookingRepository.save(booking);
 
         List<Ticket> tickets = new ArrayList<>();

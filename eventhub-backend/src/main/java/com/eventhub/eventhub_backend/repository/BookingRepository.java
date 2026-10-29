@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,10 +23,22 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             """)
     List<Booking> findAllByUserWithDetails(@Param("userId") Long userId);
 
-    // Locks this one booking row, so two simultaneous cancels take turns
+    @Query("""
+            select b from Booking b
+            join fetch b.ticketType tt
+            join fetch tt.event
+            where b.id = :id
+            """)
+    Optional<Booking> findByIdWithDetails(@Param("id") Long id);
+
+    // Locks this one booking row, so cancel, pay and expire take turns
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select b from Booking b where b.id = :id")
     Optional<Booking> findByIdForUpdate(@Param("id") Long id);
+
+    // Unpaid bookings whose payment window has closed
+    @Query("select b.id from Booking b where b.status = :status and b.expiresAt < :now")
+    List<Long> findOverdueIds(@Param("status") BookingStatus status, @Param("now") LocalDateTime now);
 
     long countByTicketTypeId(Long ticketTypeId);
 

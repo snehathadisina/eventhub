@@ -38,6 +38,9 @@ public class Booking {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
+    // Only set while the booking waits for payment. After this time the tickets go back on sale.
+    private LocalDateTime expiresAt;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

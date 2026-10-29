@@ -34,6 +34,7 @@ public class BookingService {
     private final TicketRepository ticketRepository;
     private final BookingCreator bookingCreator;
     private final WaitingListPromotionService waitingListPromotionService;
+    private final PaymentService paymentService;
 
     @Value("${app.booking.stock-strategy:lock}")
     private String stockStrategy;
@@ -88,16 +89,26 @@ public class BookingService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public BookingResponse getMine(Long bookingId, Long userId) {
+        // Someone else's booking gets the same 404 as a missing one
+        Booking booking = bookingRepository.findByIdWithDetails(bookingId)
+                .filter(b -> b.getUser().getId().equals(userId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
+
+        List<Ticket> tickets = ticketRepository.findByBookingIdIn(List.of(bookingId));
+        return BookingResponse.from(booking, tickets);
+    }
+
     @Transactional
     public BookingResponse cancel(Long bookingId, Long userId) {
-        // Someone else's booking gets the same 404 as a missing one, so it isn't revealed
         Booking booking = bookingRepository.findByIdForUpdate(bookingId)
                 .filter(b -> b.getUser().getId().equals(userId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
 
-        if (booking.getStatus() != BookingStatus.CONFIRMED) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Only confirmed bookings can be cancelled");
+        BookingStatus previous = booking.getStatus();
+        if (previous != BookingStatus.CONFIRMED && previous != BookingStatus.PENDING) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This booking is already cancelled");
         }
 
         TicketType ticketType = booking.getTicketType();
@@ -105,12 +116,14 @@ public class BookingService {
         if (!event.getStartTime().isAfter(LocalDateTime.now())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "This event has already started");
         }
+
         if (ticketRepository.countCheckedInByBooking(booking.getId()) > 0) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Some tickets from this booking were already used");
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
+        booking.setExpiresAt(null);
 
         int restored = ticketTypeRepository.incrementStock(ticketType.getId(), booking.getQuantity());
         if (restored == 0) {
@@ -118,7 +131,11 @@ public class BookingService {
             throw new IllegalStateException("Could not restore stock for booking " + bookingId);
         }
 
-        // Day 13: the freed tickets go to the people waiting, in the same transaction
+        if (previous == BookingStatus.CONFIRMED) {
+            paymentService.refundIfPaid(booking); // a no-op for free tickets
+        }
+
+        // The freed tickets go to the people waiting, in the same transaction
         waitingListPromotionService.promoteFor(ticketType.getId());
 
         List<Ticket> tickets = ticketRepository.findByBookingIdIn(List.of(booking.getId()));

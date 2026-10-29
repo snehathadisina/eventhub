@@ -37,6 +37,11 @@ public class BookingController {
         return bookingService.listMine(userId(jwt));
     }
 
+    @GetMapping("/{id}")
+    public BookingResponse one(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        return bookingService.getMine(id, userId(jwt));
+    }
+
     @PostMapping("/{id}/cancel")
     public BookingResponse cancel(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
         return bookingService.cancel(id, userId(jwt));
