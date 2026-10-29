@@ -21,7 +21,8 @@ public record BookingResponse(
         BookingStatus status,
         BigDecimal totalAmount,
         LocalDateTime createdAt,
-        List<String> ticketCodes
+        List<String> ticketCodes,
+        List<TicketInfo> tickets
 ) {
     public static BookingResponse from(Booking b, List<Ticket> tickets) {
         TicketType tt = b.getTicketType();
@@ -29,6 +30,7 @@ public record BookingResponse(
         return new BookingResponse(b.getId(), e.getId(), e.getTitle(), e.getStartTime(),
                 tt.getId(), tt.getName(), b.getQuantity(), b.getStatus(),
                 b.getTotalAmount(), b.getCreatedAt(),
-                tickets.stream().map(Ticket::getTicketCode).toList());
+                tickets.stream().map(Ticket::getTicketCode).toList(),
+                tickets.stream().map(t -> new TicketInfo(t.getTicketCode(), t.isCheckedIn())).toList());
     }
 }

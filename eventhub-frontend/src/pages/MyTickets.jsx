@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { getErrorMessage } from '../api/errors';
 import ConfirmDialog from '../components/ConfirmDialog';
+import TicketsDialog from '../components/TicketsDialog';
 import { formatDateTime, formatPrice } from '../utils/format';
 
 const STATUS_CLASS = {
@@ -31,6 +32,7 @@ export default function MyTickets() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [data, setData] = useState({ loaded: false, bookings: [], waiting: [], error: '' });
   const [pending, setPending] = useState(null); // { kind: 'booking' | 'waiting', item }
+  const [viewing, setViewing] = useState(null); // the booking whose QR codes are open
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [actionError, setActionError] = useState('');
@@ -94,6 +96,9 @@ export default function MyTickets() {
     <div className="container page">
       <div className="page-header">
         <h1>My tickets</h1>
+        <button type="button" className="btn btn-outline" onClick={() => setRefreshKey((k) => k + 1)}>
+          Refresh
+        </button>
       </div>
 
       {notice && <div className="alert-success" role="status">{notice}</div>}
@@ -120,7 +125,7 @@ export default function MyTickets() {
                     <th>Tickets</th>
                     <th>Total</th>
                     <th>Status</th>
-                    <th>Codes</th>
+                    <th>QR codes</th>
                     <th />
                   </tr>
                 </thead>
@@ -133,17 +138,10 @@ export default function MyTickets() {
                       <td>{formatPrice(b.totalAmount)}</td>
                       <td><StatusBadge status={b.status} /></td>
                       <td>
-                        {b.status === 'CONFIRMED' && b.ticketCodes.length > 0 ? (
-                          <details className="ticket-codes">
-                            <summary>
-                              {b.ticketCodes.length} ticket{b.ticketCodes.length === 1 ? '' : 's'}
-                            </summary>
-                            <ul>
-                              {b.ticketCodes.map((code) => (
-                                <li key={code}>{code}</li>
-                              ))}
-                            </ul>
-                          </details>
+                        {b.status === 'CONFIRMED' && b.tickets.length > 0 ? (
+                          <button type="button" className="link-primary" onClick={() => setViewing(b)}>
+                            Show {b.tickets.length} ticket{b.tickets.length === 1 ? '' : 's'}
+                          </button>
                         ) : (
                           '-'
                         )}
@@ -220,6 +218,8 @@ export default function MyTickets() {
         onConfirm={handleConfirm}
         onCancel={() => setPending(null)}
       />
+
+      <TicketsDialog booking={viewing} onClose={() => setViewing(null)} />
     </div>
   );
 }

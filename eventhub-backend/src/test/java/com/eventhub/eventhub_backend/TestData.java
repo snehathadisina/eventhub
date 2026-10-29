@@ -50,11 +50,30 @@ class TestData {
         return userRepository.save(newUser("Buyer", Role.ATTENDEE)).getId();
     }
 
+    /** An organizer who owns nothing. Used to test "not your event". */
+    Long otherOrganizer() {
+        return userRepository.save(newUser("Other Organizer", Role.ORGANIZER)).getId();
+    }
+
+    Long eventId(Long ticketTypeId) {
+        return ticketTypeRepository.findById(ticketTypeId).orElseThrow().getEvent().getId();
+    }
+
+    Long organizerId(Long ticketTypeId) {
+        Event event = eventRepository.findById(eventId(ticketTypeId)).orElseThrow();
+        return event.getOrganizer().getId();
+    }
+
     /** Moves the event of this ticket type into the past. */
     void startEventInThePast(Long ticketTypeId) {
-        Long eventId = ticketTypeRepository.findById(ticketTypeId).orElseThrow().getEvent().getId();
-        Event event = eventRepository.findById(eventId).orElseThrow();
+        Event event = eventRepository.findById(eventId(ticketTypeId)).orElseThrow();
         event.setStartTime(LocalDateTime.now().minusDays(1));
+        eventRepository.save(event);
+    }
+
+    void cancelEvent(Long ticketTypeId) {
+        Event event = eventRepository.findById(eventId(ticketTypeId)).orElseThrow();
+        event.setStatus(EventStatus.CANCELLED);
         eventRepository.save(event);
     }
 

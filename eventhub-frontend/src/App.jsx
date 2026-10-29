@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import RequireAuth from './components/RequireAuth';
 import RequireOrganizer from './components/RequireOrganizer';
+import Attendees from './pages/Attendees';
 import EventDetail from './pages/EventDetail';
 import EventForm from './pages/EventForm';
 import Events from './pages/Events';
@@ -39,6 +40,7 @@ export default function App() {
             <Route path="/organizer/events/new" element={<EventForm />} />
             <Route path="/organizer/events/:id/edit" element={<EventForm />} />
             <Route path="/organizer/events/:id/tickets" element={<ManageTickets />} />
+            <Route path="/organizer/events/:id/attendees" element={<Attendees />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

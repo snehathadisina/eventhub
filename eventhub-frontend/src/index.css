@@ -169,3 +169,25 @@ body {
 .empty a { color: var(--primary); }
 .ticket-codes summary { cursor: pointer; color: var(--primary); }
 .ticket-codes ul { margin: 0.5rem 0 0; padding-left: 1.1rem; font-family: ui-monospace, Consolas, monospace; font-size: 0.8rem; }
+
+
+.ticket-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.ticket-card { border: 1px solid var(--border); border-radius: 12px; padding: 0.75rem; text-align: center; background: var(--card); }
+.ticket-qr { display: inline-block; background: #fff; padding: 10px; border-radius: 8px; line-height: 0; }
+.ticket-info { display: flex; flex-direction: column; gap: 0.35rem; align-items: center; margin-top: 0.6rem; }
+.ticket-code { font-family: ui-monospace, Consolas, monospace; font-size: 0.7rem; color: var(--muted); word-break: break-all; }
+.ticket-used .ticket-qr { opacity: 0.35; }
+
+.tickets-dialog { border: none; border-radius: 12px; padding: 0; width: calc(100% - 2rem); max-width: 640px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25); color: var(--text); }
+.tickets-dialog::backdrop { background: rgba(17, 24, 39, 0.5); }
+.tickets-body { padding: 1.5rem; }
+.tickets-body h2 { margin: 0 0 0.25rem; }
+
+.link-primary { background: none; border: none; padding: 0; color: var(--primary); cursor: pointer; font-size: inherit; }
+.link-primary:hover { text-decoration: underline; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin: 1rem 0 1.5rem; }
+.stat { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; }
+.stat-value { font-size: 1.8rem; font-weight: 700; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.search-input { width: 100%; max-width: 360px; padding: 0.6rem 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; }

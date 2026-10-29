@@ -95,6 +95,7 @@ export default function OrganizerEvents() {
                       <div className="actions">
                         <Link to={`/organizer/events/${event.id}/edit`}>Edit</Link>
                         <Link to={`/organizer/events/${event.id}/tickets`}>Tickets</Link>
+                        <Link to={`/organizer/events/${event.id}/attendees`}>Attendees</Link>
                         <button type="button" className="link-danger"
                                 onClick={() => setPending(event)}>
                           Cancel
