@@ -11,6 +11,7 @@ import ManageTickets from './pages/ManageTickets';
 import MyTickets from './pages/MyTickets';
 import OrganizerEvents from './pages/OrganizerEvents';
 import Register from './pages/Register';
+import Checkout from './pages/Checkout';
 
 function NotFound() {
   return (
@@ -41,6 +42,11 @@ export default function App() {
             <Route path="/organizer/events/:id/edit" element={<EventForm />} />
             <Route path="/organizer/events/:id/tickets" element={<ManageTickets />} />
             <Route path="/organizer/events/:id/attendees" element={<Attendees />} />
+          </Route>
+
+          <Route element={<RequireAuth />}>
+            <Route path="/my-tickets" element={<MyTickets />} />
+            <Route path="/checkout/:bookingId" element={<Checkout />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

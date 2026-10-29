@@ -17,10 +17,10 @@ const STATUS_CLASS = {
 
 const STATUS_LABEL = {
   CONFIRMED: 'Confirmed',
-  PENDING: 'Pending',
+  PENDING: 'Awaiting payment',
   CANCELLED: 'Cancelled',
   WAITING: 'Waiting',
-  PROMOTED: 'Ticket booked',
+  PROMOTED: 'Moved to bookings',
 };
 
 function StatusBadge({ status, cancelledLabel }) {
@@ -48,7 +48,10 @@ export default function MyTickets() {
         const now = Date.now();
         const bookings = bookingsRes.data.map((b) => ({
           ...b,
-          canCancel: b.status === 'CONFIRMED' && Date.parse(b.eventStartTime) > now,
+          canCancel:
+            (b.status === 'CONFIRMED' || b.status === 'PENDING') && Date.parse(b.eventStartTime) > now,
+          minutesLeft:
+            b.status === 'PENDING' && b.secondsLeft != null ? Math.ceil(b.secondsLeft / 60) : null,
         }));
         setData({ loaded: true, bookings, waiting: waitingRes.data, error: '' });
       })
@@ -68,7 +71,12 @@ export default function MyTickets() {
     try {
       if (pending.kind === 'booking') {
         await api.post(`/api/bookings/${pending.item.id}/cancel`);
-        setNotice('Booking cancelled. Your tickets are back on sale.');
+        const wasPaid = pending.item.status === 'CONFIRMED' && Number(pending.item.totalAmount) > 0;
+        setNotice(
+          wasPaid
+            ? `Booking cancelled. A refund of ${formatPrice(pending.item.totalAmount)} will go back to your card.`
+            : 'Booking cancelled. Your tickets are back on sale.',
+        );
       } else {
         await api.delete(`/api/waiting-list/${pending.item.id}`);
         setNotice('You left the waiting list.');
@@ -125,7 +133,7 @@ export default function MyTickets() {
                     <th>Tickets</th>
                     <th>Total</th>
                     <th>Status</th>
-                    <th>QR codes</th>
+                    <th>Tickets / payment</th>
                     <th />
                   </tr>
                 </thead>
@@ -138,13 +146,20 @@ export default function MyTickets() {
                       <td>{formatPrice(b.totalAmount)}</td>
                       <td><StatusBadge status={b.status} /></td>
                       <td>
-                        {b.status === 'CONFIRMED' && b.tickets.length > 0 ? (
+                        {b.status === 'CONFIRMED' && b.tickets.length > 0 && (
                           <button type="button" className="link-primary" onClick={() => setViewing(b)}>
                             Show {b.tickets.length} ticket{b.tickets.length === 1 ? '' : 's'}
                           </button>
-                        ) : (
-                          '-'
                         )}
+                        {b.status === 'PENDING' && b.minutesLeft > 0 && (
+                          <Link to={`/checkout/${b.id}`} className="btn btn-primary btn-small">
+                            Pay now ({b.minutesLeft} min left)
+                          </Link>
+                        )}
+                        {b.status === 'PENDING' && b.minutesLeft === 0 && (
+                          <span className="muted">Time is up</span>
+                        )}
+                        {b.status !== 'CONFIRMED' && b.status !== 'PENDING' && '-'}
                       </td>
                       <td>
                         {b.canCancel && (

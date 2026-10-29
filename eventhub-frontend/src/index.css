@@ -204,3 +204,20 @@ body {
 .recent-scans li { padding: 0.25rem 0; color: var(--muted); }
 .recent-scans .ok::before { content: 'OK  '; color: #166534; font-weight: 700; }
 .recent-scans .fail::before { content: 'NO  '; color: #991b1b; font-weight: 700; }
+
+
+.checkout { max-width: 640px; margin: 0 auto; }
+.checkout-summary { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin: 1rem 0; }
+.checkout-summary dl { display: grid; grid-template-columns: auto 1fr; gap: 0.35rem 1rem; margin: 0; }
+.checkout-summary dt { color: var(--muted); }
+.checkout-summary dd { margin: 0; font-weight: 600; }
+.timer-banner { border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-weight: 600; background: #fef3c7; color: #92400e; }
+.timer-banner.expired { background: #fee2e2; color: #991b1b; }
+.test-card-hint { background: #eff6ff; color: #1e40af; border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.85rem; margin-bottom: 1rem; line-height: 1.5; }
+.pay-form { display: grid; gap: 0.9rem; }
+.pay-form label { display: grid; gap: 0.3rem; font-weight: 600; font-size: 0.9rem; }
+.pay-form input { padding: 0.65rem 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; }
+.pay-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
+.pay-message { border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-weight: 600; }
+.pay-message.ok { background: #dcfce7; color: #166534; }
+.pay-message.fail { background: #fee2e2; color: #991b1b; }

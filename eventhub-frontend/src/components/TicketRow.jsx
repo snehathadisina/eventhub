@@ -29,7 +29,12 @@ export default function TicketRow({ ticket, eventStarted, waitingEntry, onDone, 
     setError('');
     try {
       if (canBookNow) {
-        await api.post('/api/bookings', { ticketTypeId: ticket.id, quantity });
+        const { data } = await api.post('/api/bookings', { ticketTypeId: ticket.id, quantity });
+        if (data.status === 'PENDING') {
+          // Paid tickets are held for a few minutes while the buyer pays
+          navigate(`/checkout/${data.id}`);
+          return;
+        }
         onDone(`Booked ${quantity} x ${ticket.name}.`);
       } else {
         await api.post('/api/waiting-list', { ticketTypeId: ticket.id, quantity });
