@@ -105,6 +105,10 @@ public class BookingService {
         if (!event.getStartTime().isAfter(LocalDateTime.now())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "This event has already started");
         }
+        if (ticketRepository.countCheckedInByBooking(booking.getId()) > 0) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Some tickets from this booking were already used");
+        }
 
         booking.setStatus(BookingStatus.CANCELLED);
 

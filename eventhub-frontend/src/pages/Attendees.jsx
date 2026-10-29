@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { isCancel } from 'axios';
 import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
@@ -14,9 +14,16 @@ function csvCell(value) {
 
 export default function Attendees() {
   const { id } = useParams();
+  const inputRef = useRef(null);
+  const scanCounter = useRef(0);
+
   const [refreshKey, setRefreshKey] = useState(0);
   const [result, setResult] = useState({ id: null, data: null, error: '' });
   const [search, setSearch] = useState('');
+  const [code, setCode] = useState('');
+  const [scanning, setScanning] = useState(false);
+  const [banner, setBanner] = useState(null); // { ok, text }
+  const [recent, setRecent] = useState([]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -32,26 +39,65 @@ export default function Attendees() {
     return () => controller.abort();
   }, [id, refreshKey]);
 
+  const addRecent = (ok, text) => {
+    scanCounter.current += 1;
+    setRecent((prev) => [{ key: scanCounter.current, ok, text }, ...prev].slice(0, 8));
+  };
+
+  const checkIn = async (ticketCode) => {
+    setScanning(true);
+    try {
+      const { data: res } = await api.post(`/api/organizer/events/${id}/check-in`, { ticketCode });
+      const text = `${res.attendeeName} - ${res.ticketTypeName}`;
+      setBanner({ ok: true, text: `Checked in: ${text}` });
+      addRecent(true, text);
+
+      // Update the counters and that one row without reloading the whole list
+      setResult((prev) => {
+        if (!prev.data) return prev;
+        return {
+          ...prev,
+          data: {
+            ...prev.data,
+            totalTickets: res.totalTickets,
+            checkedInCount: res.checkedInCount,
+            attendees: prev.data.attendees.map((a) =>
+              a.ticketCode === res.ticketCode
+                ? { ...a, checkedIn: true, checkedInAt: res.checkedInAt }
+                : a,
+            ),
+          },
+        };
+      });
+    } catch (err) {
+      const message = getErrorMessage(err);
+      setBanner({ ok: false, text: message });
+      addRecent(false, message);
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const trimmed = code.trim();
+    if (!trimmed) return;
+    setCode('');
+    await checkIn(trimmed);
+    inputRef.current?.focus();
+  };
+
   const loading = result.id !== id;
   const { data, error } = result;
 
   const term = search.trim().toLowerCase();
- 
-//const term = search.trim().toLowerCase();
-
-const rows = data
-  ? data.attendees.filter((a) =>
-      [
-        a.attendeeName,
-        a.attendeeEmail,
-        a.ticketCode,
-        a.ticketTypeName,
-      ].some((value) =>
-        String(value ?? '').toLowerCase().includes(term)
+  const rows = data
+    ? data.attendees.filter(
+        (a) =>
+          !term ||
+          [a.attendeeName, a.attendeeEmail, a.ticketCode].some((v) => v.toLowerCase().includes(term)),
       )
-    )
-  : [];
-
+    : [];
 
   const downloadCsv = () => {
     const header = ['Name', 'Email', 'Ticket type', 'Ticket code', 'Checked in at'];
@@ -102,6 +148,42 @@ const rows = data
             </div>
           </div>
 
+          <section className="scan-card">
+            <h2>Check in</h2>
+            <p className="muted">
+              Scan a ticket with a barcode scanner, or type or paste the ticket code and press Enter.
+            </p>
+            <form className="scan-form" onSubmit={handleSubmit}>
+              <input
+                ref={inputRef}
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="Ticket code"
+                aria-label="Ticket code"
+                autoFocus
+                autoComplete="off"
+              />
+              <button type="submit" className="btn btn-primary">Check in</button>
+            </form>
+
+            {banner && (
+              <div
+                className={`scan-banner ${banner.ok ? 'scan-banner-ok' : 'scan-banner-error'}`}
+                role={banner.ok ? 'status' : 'alert'}
+              >
+                {banner.text}
+              </div>
+            )}
+
+            {recent.length > 0 && (
+              <ul className="recent-scans">
+                {recent.map((r) => (
+                  <li key={r.key} className={r.ok ? 'ok' : 'fail'}>{r.text}</li>
+                ))}
+              </ul>
+            )}
+          </section>
+
           <div className="toolbar">
             <input
               className="search-input"
@@ -139,6 +221,7 @@ const rows = data
                     <th>Ticket</th>
                     <th>Code</th>
                     <th>Status</th>
+                    <th />
                   </tr>
                 </thead>
                 <tbody>
@@ -155,6 +238,18 @@ const rows = data
                           </span>
                         ) : (
                           <span className="status status-draft">Not yet</span>
+                        )}
+                      </td>
+                      <td>
+                        {!a.checkedIn && (
+                          <button
+                            type="button"
+                            className="btn btn-outline btn-small"
+                            onClick={() => checkIn(a.ticketCode)}
+                            disabled={scanning}
+                          >
+                            Check in
+                          </button>
                         )}
                       </td>
                     </tr>
