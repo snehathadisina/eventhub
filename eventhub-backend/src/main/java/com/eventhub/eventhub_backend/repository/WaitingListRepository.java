@@ -59,4 +59,13 @@ public interface WaitingListRepository extends JpaRepository<WaitingList, Long> 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select w from WaitingList w where w.id = :id")
     Optional<WaitingList> findByIdForUpdate(@Param("id") Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select w from WaitingList w
+            where w.ticketType.event.id = :eventId and w.status = :status
+            order by w.id asc
+            """)
+    List<WaitingList> findWaitingForEventForUpdate(@Param("eventId") Long eventId,
+                                                   @Param("status") WaitingListStatus status);
 }

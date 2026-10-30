@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Collection;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
@@ -43,4 +44,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     long countByTicketTypeId(Long ticketTypeId);
 
     long countByTicketTypeIdAndStatus(Long ticketTypeId, BookingStatus status);
+
+
+    // Ids only: we then lock and re-read each booking one by one
+    @Query("""
+            select b.id from Booking b
+            where b.ticketType.event.id = :eventId and b.status in :statuses
+            order by b.id
+            """)
+    List<Long> findIdsByEventAndStatusIn(@Param("eventId") Long eventId,
+                                         @Param("statuses") Collection<BookingStatus> statuses);
 }

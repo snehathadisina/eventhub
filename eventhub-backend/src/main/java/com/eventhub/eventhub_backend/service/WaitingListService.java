@@ -7,6 +7,7 @@ import com.eventhub.eventhub_backend.entity.TicketType;
 import com.eventhub.eventhub_backend.entity.WaitingList;
 import com.eventhub.eventhub_backend.enums.EventStatus;
 import com.eventhub.eventhub_backend.enums.WaitingListStatus;
+import com.eventhub.eventhub_backend.mail.NotificationService;
 import com.eventhub.eventhub_backend.repository.TicketTypeRepository;
 import com.eventhub.eventhub_backend.repository.UserRepository;
 import com.eventhub.eventhub_backend.repository.WaitingListRepository;
@@ -26,6 +27,7 @@ public class WaitingListService {
     private final WaitingListRepository waitingListRepository;
     private final TicketTypeRepository ticketTypeRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public WaitingListResponse join(WaitingListRequest request, Long userId) {
@@ -62,7 +64,10 @@ public class WaitingListService {
         entry.setQuantity(quantity);
         waitingListRepository.save(entry);
 
-        return WaitingListResponse.from(entry, positionOf(entry));
+//        return WaitingListResponse.from(entry, positionOf(entry));
+        Long position = positionOf(entry);
+        notificationService.waitlistJoined(entry, position);
+        return WaitingListResponse.from(entry, position);
     }
 
     @Transactional(readOnly = true)

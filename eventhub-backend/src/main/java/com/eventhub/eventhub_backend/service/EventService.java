@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Isolation;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,6 +27,7 @@ public class EventService {
     private final EventRepository eventRepository;
     private final TicketTypeRepository ticketTypeRepository;
     private final UserRepository userRepository;
+    private final EventCancellationService eventCancellationService;
 
     @Transactional
     public EventResponse create(EventRequest request, Long organizerId) {
@@ -47,10 +49,23 @@ public class EventService {
         return EventResponse.from(event);
     }
 
-    @Transactional
+//    @Transactional
+//    public void cancel(Long eventId, Long organizerId) {
+//        Event event = getOwnedEvent(eventId, organizerId);
+//        event.setStatus(EventStatus.CANCELLED);
+//    }
+
+    // READ_COMMITTED: every query inside sees the latest committed payments and bookings
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public void cancel(Long eventId, Long organizerId) {
         Event event = getOwnedEvent(eventId, organizerId);
+        if (event.getStatus() == EventStatus.CANCELLED) {
+            return; // already cancelled, nothing more to do
+        }
         event.setStatus(EventStatus.CANCELLED);
+
+        // Everyone holding a booking or waiting is cancelled, refunded and told
+        eventCancellationService.cancelAllFor(event);
     }
 
     @Transactional(readOnly = true)

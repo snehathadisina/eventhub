@@ -2,6 +2,7 @@ package com.eventhub.eventhub_backend.service;
 
 import com.eventhub.eventhub_backend.entity.Booking;
 import com.eventhub.eventhub_backend.enums.BookingStatus;
+import com.eventhub.eventhub_backend.mail.NotificationService;
 import com.eventhub.eventhub_backend.repository.BookingRepository;
 import com.eventhub.eventhub_backend.repository.TicketTypeRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ public class BookingExpiryService {
     private final BookingRepository bookingRepository;
     private final TicketTypeRepository ticketTypeRepository;
     private final WaitingListPromotionService waitingListPromotionService;
+    private final NotificationService notificationService;
 
     /**
      * Cancels the booking if it is still unpaid and its time is up, puts the tickets back on sale,
@@ -42,6 +44,10 @@ public class BookingExpiryService {
         if (ticketTypeRepository.incrementStock(ticketTypeId, booking.getQuantity()) == 0) {
             throw new IllegalStateException("Could not restore stock for booking " + bookingId);
         }
+
+//        waitingListPromotionService.promoteFor(ticketTypeId);
+//        return true;
+        notificationService.bookingExpired(booking);
 
         waitingListPromotionService.promoteFor(ticketTypeId);
         return true;

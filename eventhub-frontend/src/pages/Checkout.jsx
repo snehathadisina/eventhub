@@ -120,7 +120,8 @@ export default function Checkout() {
       if (data.success) {
         setState((prev) => ({ ...prev, booking: data.booking }));
         setCard(EMPTY_CARD);
-        setMessage({ ok: true, text: 'Payment successful. Your tickets are ready.' });
+        // setMessage({ ok: true, text: 'Payment successful. Your tickets are ready.' });
+        setMessage({ ok: true, text: 'Payment successful. Your tickets are ready and a confirmation email is on its way.' });
       } else {
         setMessage({ ok: false, text: data.message });
       }

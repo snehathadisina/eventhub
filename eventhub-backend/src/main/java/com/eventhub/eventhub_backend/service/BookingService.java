@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import com.eventhub.eventhub_backend.mail.NotificationService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,6 +36,7 @@ public class BookingService {
     private final BookingCreator bookingCreator;
     private final WaitingListPromotionService waitingListPromotionService;
     private final PaymentService paymentService;
+    private final NotificationService notificationService;
 
     @Value("${app.booking.stock-strategy:lock}")
     private String stockStrategy;
@@ -135,6 +137,7 @@ public class BookingService {
             paymentService.refundIfPaid(booking); // a no-op for free tickets
         }
 
+        notificationService.bookingCancelled(booking);
         // The freed tickets go to the people waiting, in the same transaction
         waitingListPromotionService.promoteFor(ticketType.getId());
 

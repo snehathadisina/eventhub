@@ -35,10 +35,12 @@ export default function TicketRow({ ticket, eventStarted, waitingEntry, onDone, 
           navigate(`/checkout/${data.id}`);
           return;
         }
-        onDone(`Booked ${quantity} x ${ticket.name}.`);
+        // onDone(`Booked ${quantity} x ${ticket.name}.`);
+        onDone(`Booked ${quantity} x ${ticket.name}. We have emailed you the details.`);
       } else {
         await api.post('/api/waiting-list', { ticketTypeId: ticket.id, quantity });
-        onDone(`You are on the waiting list for ${quantity} x ${ticket.name}.`);
+        // onDone(`You are on the waiting list for ${quantity} x ${ticket.name}.`);
+        onDone(`You are on the waiting list for ${quantity} x ${ticket.name}. We will email you when tickets are free.`);
       }
     } catch (err) {
       setError(getErrorMessage(err));
