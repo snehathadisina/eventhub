@@ -50,7 +50,8 @@ public class WaitingListPromotionService {
 
             // Same atomic statement as normal booking: returns 1 only if enough tickets remain.
             if (ticketTypeRepository.decrementStock(ticketTypeId, quantity) == 1) {
-                bookingCreator.create(entry.getUser().getId(), ticketType, quantity);
+//                bookingCreator.create(entry.getUser().getId(), ticketType, quantity);
+                bookingCreator.create(entry.getUser().getId(), ticketType, quantity, true);
                 entry.setStatus(WaitingListStatus.PROMOTED);
                 promoted++;
             }

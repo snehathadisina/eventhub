@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import com.eventhub.eventhub_backend.mail.NotificationService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,6 +30,7 @@ public class PaymentService {
     private final TicketRepository ticketRepository;
     private final PaymentRepository paymentRepository;
     private final MockPaymentGateway gateway;
+    private final NotificationService notificationService;
 
     @Transactional
     public PaymentResponse pay(Long bookingId, Long userId, String cardLast4) {
@@ -64,6 +66,7 @@ public class PaymentService {
         if (result.success()) {
             booking.setStatus(BookingStatus.CONFIRMED);
             booking.setExpiresAt(null);
+            notificationService.bookingConfirmed(booking, false);
         }
 
         List<Ticket> tickets = ticketRepository.findByBookingIdIn(List.of(booking.getId()));

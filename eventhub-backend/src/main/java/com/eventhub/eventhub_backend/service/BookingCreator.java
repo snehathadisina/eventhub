@@ -5,6 +5,7 @@ import com.eventhub.eventhub_backend.entity.Booking;
 import com.eventhub.eventhub_backend.entity.Ticket;
 import com.eventhub.eventhub_backend.entity.TicketType;
 import com.eventhub.eventhub_backend.enums.BookingStatus;
+import com.eventhub.eventhub_backend.mail.NotificationService;
 import com.eventhub.eventhub_backend.repository.BookingRepository;
 import com.eventhub.eventhub_backend.repository.TicketRepository;
 import com.eventhub.eventhub_backend.repository.UserRepository;
@@ -27,12 +28,18 @@ public class BookingCreator {
     private final BookingRepository bookingRepository;
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Value("${app.payment.enabled:true}")
     private boolean paymentEnabled;
 
     @Value("${app.payment.hold-minutes:10}")
     private long holdMinutes;
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public BookingResponse create(Long userId, TicketType ticketType, int quantity) {
+        return create(userId, ticketType, quantity, false);
+    }
 
     /**
      * Saves a booking and one ticket per seat. The caller must already have reserved the stock
@@ -41,7 +48,7 @@ public class BookingCreator {
      * Free tickets (or payment switched off) are CONFIRMED straight away.
      */
     @Transactional(propagation = Propagation.MANDATORY)
-    public BookingResponse create(Long userId, TicketType ticketType, int quantity) {
+    public BookingResponse create(Long userId, TicketType ticketType, int quantity, boolean fromWaitingList) {
         BigDecimal total = ticketType.getPrice().multiply(BigDecimal.valueOf(quantity));
         boolean needsPayment = paymentEnabled && total.signum() > 0;
 
@@ -62,6 +69,13 @@ public class BookingCreator {
             tickets.add(ticket);
         }
         ticketRepository.saveAll(tickets);
+
+        if (booking.getStatus() == BookingStatus.CONFIRMED) {
+            notificationService.bookingConfirmed(booking, fromWaitingList);
+        } else if (fromWaitingList) {
+            // A promoted person has a limited time to pay, so tell them. A normal buyer is on the checkout page.
+            notificationService.ticketsHeld(booking);
+        }
 
         return BookingResponse.from(booking, tickets);
     }
