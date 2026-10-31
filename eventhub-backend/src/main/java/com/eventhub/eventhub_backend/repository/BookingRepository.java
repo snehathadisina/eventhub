@@ -2,6 +2,7 @@ package com.eventhub.eventhub_backend.repository;
 
 import com.eventhub.eventhub_backend.entity.Booking;
 import com.eventhub.eventhub_backend.enums.BookingStatus;
+import com.eventhub.eventhub_backend.enums.EventStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -54,4 +55,18 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             """)
     List<Long> findIdsByEventAndStatusIn(@Param("eventId") Long eventId,
                                          @Param("statuses") Collection<BookingStatus> statuses);
+
+    // Confirmed bookings for published events that start inside the window
+    @Query("""
+            select b.id from Booking b
+            where b.status = :status
+              and b.ticketType.event.status = :eventStatus
+              and b.ticketType.event.startTime > :windowStart
+              and b.ticketType.event.startTime <= :windowEnd
+            order by b.id
+            """)
+    List<Long> findReminderCandidateIds(@Param("status") BookingStatus status,
+                                        @Param("eventStatus") EventStatus eventStatus,
+                                        @Param("windowStart") LocalDateTime windowStart,
+                                        @Param("windowEnd") LocalDateTime windowEnd);
 }
