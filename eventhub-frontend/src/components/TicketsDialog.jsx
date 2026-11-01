@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { formatDateTime } from '../utils/format';
 import TicketCard from './TicketCard';
+import AddToCalendar from './AddToCalendar';
 
 export default function TicketsDialog({ booking, onClose }) {
   const ref = useRef(null);
@@ -34,6 +35,7 @@ export default function TicketsDialog({ booking, onClose }) {
           <h2>{booking.eventTitle}</h2>
           <p className="muted">{formatDateTime(booking.eventStartTime)}</p>
           <p className="muted">Show a QR code at the entrance. Each code works only once.</p>
+          <AddToCalendar eventId={booking.eventId} />
 
           <div className="ticket-grid">
             {booking.tickets.map((ticket, index) => (

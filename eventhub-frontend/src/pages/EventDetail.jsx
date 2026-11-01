@@ -106,6 +106,7 @@ import { getErrorMessage } from '../api/errors';
 import TicketRow from '../components/TicketRow';
 import useAuth from '../hooks/useAuth';
 import { formatDateTime } from '../utils/format';
+import AddToCalendar from '../components/AddToCalendar';
 
 export default function EventDetail() {
   const { id } = useParams();
@@ -212,6 +213,7 @@ export default function EventDetail() {
             {[event.venue, event.city].filter(Boolean).join(', ')}
           </p>
           <p className="muted">Organized by {event.organizerName}</p>
+          <AddToCalendar eventId={id} />
 
           {event.description && <p className="detail-desc">{event.description}</p>}
 

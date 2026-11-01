@@ -23,12 +23,16 @@ public class EmailTemplates {
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 
+    @Value("${app.public-api-url:http://localhost:8080}")
+    private String apiUrl;
+
     public EmailContent bookingConfirmed(BookingEmailData d, boolean fromWaitingList) {
         String intro = fromWaitingList
                 ? "Good news: tickets became available and your waiting list request is now a booking."
                 : "Your booking is confirmed.";
         return build("Your tickets for " + d.eventTitle(), d.recipientName(),
-                List.of(intro, "Show the QR code from the My tickets page at the entrance."),
+//                List.of(intro, "Show the QR code from the My tickets page at the entrance."),
+                List.of(intro, "Show the QR code from the tickets page at the entrance.", calendarLine(d.eventId())),
                 bookingDetails(d), d.ticketCodes(), "View my tickets", frontendUrl + "/my-tickets");
     }
 
@@ -69,7 +73,8 @@ public class EmailTemplates {
 
     public EmailContent eventReminder(BookingEmailData d) {
         return build("Reminder: " + d.eventTitle() + " is coming up", d.recipientName(),
-                List.of("Your event starts soon. Here is everything you need."),
+//                List.of("Your event starts soon. Here is everything you need."),
+                List.of("Your event starts soon. Here is everything you need.", calendarLine(d.eventId())),
                 bookingDetails(d), d.ticketCodes(), "View my tickets", frontendUrl + "/my-tickets");
     }
 
@@ -80,6 +85,11 @@ public class EmailTemplates {
                 waitlistDetails(w), List.of(), "View my tickets", frontendUrl + "/my-tickets");
     }
 
+    private String calendarLine(Long eventId) {
+        String base = apiUrl + "/api/events/" + eventId;
+        return "Add it to your calendar: " + base + "/google-calendar (Google) or "
+                + base + "/calendar.ics (Apple, Outlook)";
+    }
     // ---------- building blocks ----------
 
     private Map<String, String> bookingDetails(BookingEmailData d) {
