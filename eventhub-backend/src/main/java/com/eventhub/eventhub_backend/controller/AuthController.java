@@ -1,9 +1,11 @@
 package com.eventhub.eventhub_backend.controller;
 
 import com.eventhub.eventhub_backend.dto.AuthResponse;
+import com.eventhub.eventhub_backend.dto.GoogleLoginRequest;
 import com.eventhub.eventhub_backend.dto.LoginRequest;
 import com.eventhub.eventhub_backend.dto.RegisterRequest;
 import com.eventhub.eventhub_backend.dto.UserResponse;
+import com.eventhub.eventhub_backend.google.GoogleLoginService;
 import com.eventhub.eventhub_backend.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final GoogleLoginService googleLoginService;
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
@@ -26,5 +29,10 @@ public class AuthController {
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
+    }
+
+    @PostMapping("/google")
+    public AuthResponse google(@Valid @RequestBody GoogleLoginRequest request) {
+        return googleLoginService.login(request.idToken());
     }
 }

@@ -32,6 +32,10 @@ public class User {
     @Column(nullable = false)
     private AuthProvider authProvider = AuthProvider.LOCAL;
 
+    // Google's permanent id for this person (the "sub" claim). Null for password-only accounts.
+    @Column(name = "google_id", unique = true)
+    private String googleId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role = Role.ATTENDEE;
