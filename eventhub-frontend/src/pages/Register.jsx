@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
+import GoogleSignInButton from '../components/GoogleSignInButton';
 import useAuth from '../hooks/useAuth';
 import { getErrorMessage } from '../api/errors';
 
 export default function Register() {
-  const { register, isAuthenticated } = useAuth();
+  const { register, loginWithGoogle, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'ATTENDEE' });
@@ -23,6 +24,19 @@ export default function Register() {
     setSubmitting(true);
     try {
       await register(form);
+      navigate('/', { replace: true });
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleGoogle = async (idToken) => {
+    setError('');
+    setSubmitting(true);
+    try {
+      await loginWithGoogle(idToken);
       navigate('/', { replace: true });
     } catch (err) {
       setError(getErrorMessage(err));
@@ -68,6 +82,13 @@ export default function Register() {
         <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
           {submitting ? 'Creating account...' : 'Register'}
         </button>
+
+        <GoogleSignInButton
+          onCredential={handleGoogle}
+          onError={setError}
+          disabled={submitting}
+        />
+        <p className="hint auth-note">Signing up with Google creates an attendee account.</p>
 
         <p className="auth-switch">
           Already have an account? <Link to="/login">Login</Link>

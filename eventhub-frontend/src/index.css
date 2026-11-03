@@ -223,3 +223,8 @@ body {
 .pay-message.fail { background: #fee2e2; color: #991b1b; }
 
 .calendar-links { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0; }
+
+.google-button { display: flex; justify-content: center; min-height: 44px; margin-top: 1.25rem; position: relative; }
+.google-button::before { content: 'or'; position: absolute; top: -1.15rem; left: 50%; transform: translateX(-50%); font-size: 0.85rem; color: var(--muted); background: var(--card); padding: 0 0.6rem; }
+.google-button.is-disabled { pointer-events: none; opacity: 0.6; }
+.auth-note { text-align: center; margin: 0.5rem 0 0; }
