@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
 import { getErrorMessage } from '../api/errors';
 import { toApiValue, toInputValue } from '../utils/format';
+import AiDraftPanel from '../components/AiDraftPanel';
 
 const EMPTY = {
   title: '',
@@ -39,6 +40,7 @@ function EventFormBody({ eventId, initial }) {
   const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const applyDraft = (fields) => setForm((prev) => ({ ...prev, ...fields }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -92,6 +94,7 @@ function EventFormBody({ eventId, initial }) {
       <form className="form-card" onSubmit={handleSubmit}>
         <h1>{isEdit ? 'Edit event' : 'Create event'}</h1>
         {error && <div className="alert-error" role="alert">{error}</div>}
+        <AiDraftPanel city={form.city} onApply={applyDraft} />
 
         <div className="field">
           <label htmlFor="title">Title *</label>
